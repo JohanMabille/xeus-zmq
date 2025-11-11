@@ -28,7 +28,7 @@ namespace xeus
 
     XEUS_ZMQ_API
     std::string get_controller_end_point(const std::string& channel);
-    
+
     XEUS_ZMQ_API
     std::string get_publisher_end_point();
 
@@ -36,6 +36,9 @@ namespace xeus
     std::string get_end_point(const std::string& transport,
                               const std::string& ip,
                               const std::string& port);
+
+    XEUS_ZMQ_API
+    std::string get_subshell_end_point(const std::string& subshell_id);
 
     XEUS_ZMQ_API
     int get_socket_linger();

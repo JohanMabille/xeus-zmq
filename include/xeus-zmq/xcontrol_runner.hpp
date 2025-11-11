@@ -43,7 +43,7 @@ namespace xeus
         fd_t get_control_fd() const;
         std::optional<xmessage> read_control(int flags = 0);
         void stop_channels();
-        
+
         void notify_control_listener(xmessage message);
 
     private:

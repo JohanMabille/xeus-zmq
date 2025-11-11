@@ -52,7 +52,7 @@ namespace xeus
         void send_shell_message(xmessage msg);
         std::optional<std::string> read_shell_controller(int flags);
         void send_shell_controller(std::string message);
-   
+
     protected:
 
         using control_runner_ptr = std::unique_ptr<xcontrol_runner>;
@@ -67,13 +67,13 @@ namespace xeus
         // API for inheriting classes
         void start_publisher_thread();
         void start_heartbeat_thread();
-        
+
         void start_control_thread();
         void run_control();
 
         void start_shell_thread();
         void run_shell();
-        
+
     private:
 
         // Implementation of xserver virtual methods

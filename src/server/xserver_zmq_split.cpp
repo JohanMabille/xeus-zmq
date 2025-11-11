@@ -25,7 +25,7 @@ namespace xeus
         p_control_runner->register_server(*this);
         p_shell_runner->register_server(*this);
     }
-    
+
     xserver_zmq_split::~xserver_zmq_split() = default;
 
     fd_t xserver_zmq_split::get_control_fd() const

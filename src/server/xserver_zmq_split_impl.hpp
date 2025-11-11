@@ -34,11 +34,12 @@ namespace xeus
     public:
 
         using listener = std::function<void(xmessage)>;
-        
+
         xserver_zmq_split_impl(zmq::context_t& context,
                                const xconfiguration& config,
                                nl::json::error_handler_t eh);
 
+        void start_shell_thread();
         void start_heartbeat_thread();
         void start_publisher_thread();
         void stop_channels();
@@ -65,7 +66,7 @@ namespace xeus
 
         std::optional<xmessage> deserialize(zmq::multipart_t& wire_msg) const;
         zmq::multipart_t serialize_iopub(xpub_message&& msg);
-    
+
     private:
 
         using authentication_ptr = std::unique_ptr<xauthentication>;
@@ -76,11 +77,17 @@ namespace xeus
         xpublisher m_publisher;
         xshell m_shell;
 
+        xthread m_shell_thread;
         xthread m_hb_thread;
         xthread m_iopub_thread;
 
         nl::json::error_handler_t m_error_handler;
     };
+
+    std::string get_shell_routing_key();
+    std::string get_control_routing_key();
+    std::string get_stdin_routing_key();
+
 }
 
 #endif

@@ -23,47 +23,46 @@
 
 namespace xeus
 {
-    class xzmq_server_split_impl;
-
     class xshell
     {
     public:
-
-        using listener = std::function<void(xmessage)>;
 
         xshell(zmq::context_t& context,
                const std::string& transport,
                const std::string& ip,
                const std::string& shell_port,
-               const std::string& stdin_port,
-               xserver_zmq_split_impl* server);
+               const std::string& stdin_port);
  
         std::string get_shell_port() const;
         std::string get_stdin_port() const;
 
-        fd_t get_shell_fd() const;
-        fd_t get_controller_fd() const;
-
-        std::optional<channel> poll_channels(long timeout);
-        std::optional<xmessage> read_shell(int flags);
-        std::optional<std::string> read_controller(int flags);
-
-        void send_shell(zmq::multipart_t& message);
-        std::optional<xmessage> send_stdin(zmq::multipart_t& message);
-        void send_controller(std::string message);
-
-        void publish(zmq::multipart_t& message);
-        void abort_queue(const listener& l, long polling_interval);
+        void run();
 
     private:
 
+        struct subshell_t
+        {
+            std::string name;
+            zmq::socket_t socket;
+        };
+        using subshell_list_t = std::vector<subshell_t>;
+        using subshell_iterator = subshell_list_t::const_iterator;
+        using polliter_list_t = std::vector<zmq::pollitem_t>;
+
+        bool add_subshell(const std::string& id);
+        bool remove_subshell(const std::string& id);
+        subshell_iterator find_subshell(const std::string& id) const;
+
         zmq::socket_t m_shell;
         zmq::socket_t m_stdin;
-        zmq::socket_t m_publisher_pub;
         zmq::socket_t m_controller;
-        xserver_zmq_split_impl* p_server;
+        subshell_list_t m_subshell_list;
+        pollitem_list_t m_pollitem_list;
+        zmq::context_t* p_context;
+
+        static constexpr SUBSHELL_OFFSET = 3;
     };
-}
+ }
 
 #endif
 
