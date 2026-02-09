@@ -19,13 +19,65 @@
 #include "xeus-zmq.hpp"
 #include "xcontrol_runner.hpp"
 #include "xmiddleware.hpp"
-#include "xshell_runner.hpp"
+#include "xsubshell_runner.hpp"
 #include "xthread.hpp"
 
 namespace xeus
 {
     class xserver_zmq_split_impl;
 
+    class XEUS_ZMQ_API xserver_zmq_split : public xserver
+    {
+    public:
+
+        ~xserver_zmq_split() override;
+
+        // API for xcontrol_runner
+        void notify_control_listener(xmessage msg);
+
+        fd_t get_control_fd() const;
+        std::optional<xmessage> read_control(int flags);
+        void send_control_message(xmessage msg);
+        void stop_channels();
+
+        // API for xsubshell_runner
+        using xserver::notify_shell_listener;
+        std::string notify_internal_listener(std::string message);
+
+        fd_t get_shell_fd(const std::string& subshell_id) const;
+
+        std::optional<channel> poll_shell_channels(const std::string& subshell_id, long timeout);
+        std::optional<xmessage> read_shell(const std::string& subshell_id, int flags);
+        void send_shell_message(xmessage msg);
+        std::optional<std::string> read_shell_controller(const std::string& subshell_id, int flags);
+        void send_shell_controller(const std::string& subshell_id, std::string message);
+
+    protected:
+
+        using control_runner_ptr = std::unique_ptr<xcontrol_runner>;
+        using subshell_runner_ptr = std::unique_ptr<xsubshell_runner>;
+
+        xserver_zmq_split(xcontext& context,
+                          const xconfiguration& config,
+                          nl::json::error_handler_t eh,
+                          control_runner_ptr control,
+                          subshell_runner_ptr shell);
+
+        // API for inheriting classes
+        void start_publisher_thread();
+        void start_heartbeat_thread();
+        void start_shell_thread();
+
+        void start_control_thread();
+        void run_control();
+
+        void start_main_subshell_thread();
+        void run_main_subshell_thread();
+
+    private:
+    };
+
+    // OLD API
     class XEUS_ZMQ_API xserver_zmq_split : public xserver
     {
     public:

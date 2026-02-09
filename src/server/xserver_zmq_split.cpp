@@ -7,11 +7,46 @@
 * The full license is in the file LICENSE, distributed with this software. *
 ****************************************************************************/
 
+#include "xeus/xguid.hpp"
+
 #include "xeus-zmq/xserver_zmq_split.hpp"
 #include "xserver_zmq_split_impl.hpp"
 
 namespace xeus
 {
+    // TODO: replies should be sent from xeus because this needs
+    // m_user_name and m_session_id
+    // API changes required in xeus
+    void xserver_zmq_split::notify_control_listener(xmessage msg)
+    {
+        std::string msg_type = msg.header()["msg_type"];
+        if (msg_type == "create_subshell_request")
+        {
+            nl::json rep_content = p_impl->add_subshell();
+            // TODO: start subshell thread
+            // TODO send message to shell
+            // TODO: send reply on control
+        }
+        else if (msg_type == "delete_subshell_request")
+        {
+            std::string subshell_id = msg.content()["subshell_id"];
+            // TODO: stop subshell thread
+            // TODO send message to shell
+            nl::json rep_content = p_impl->remove_subshell(std::move(subshell_id));
+            // TODO: send reply on control
+        }
+        else if (msg_type == "list_subshell_request")
+        {
+            nl::json rep_content = p_impl->list_subshell();
+            // TODO: send reply on control
+        }
+        else
+        {
+            xserver::notify_control_listener(std::move(message));
+        }
+    }
+
+    // Old implementation
     xserver_zmq_split::xserver_zmq_split(xcontext& context,
                                          const xconfiguration& config,
                                          nl::json::error_handler_t eh,
@@ -99,7 +134,7 @@ namespace xeus
     {
         p_impl->start_heartbeat_thread();
     }
-    
+
     void xserver_zmq_split::start_control_thread()
     {
         m_control_thread = xthread(&xcontrol_runner::run, p_control_runner.get());

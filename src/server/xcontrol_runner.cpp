@@ -43,7 +43,6 @@ namespace xeus
         p_server->stop_channels();
     }
 
-
     void xcontrol_runner::notify_control_listener(xmessage message)
     {
         p_server->notify_control_listener(std::move(message));

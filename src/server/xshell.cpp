@@ -11,6 +11,7 @@
 #include <chrono>
 #include <thread>
 
+#include "xinternal_protocol.hpp"
 #include "xserver_zmq_split_impl.hpp"
 #include "xshell.hpp"
 #include "../common/xmiddleware_impl.hpp"
@@ -62,11 +63,11 @@ namespace xeus
 
             if (m_pollitem_list[0].revents & ZMQ_POLLIN)
             {
-                dispatch(m_shell, get_shell_routing_key());
+                dispatch(m_shell, SHELL_ROUTING_KEY);
             }
             else if (m_pollitem_list[1].revents & ZMQ_POLLIN)
             {
-                dispatch(m_stdin, get_stdin_routing_key());
+                dispatch(m_stdin, STDIN_ROUTING_KEY);
             }
             else if(m_pollitem_list[2].revents & ZMQ_POLLIN)
             {
@@ -105,18 +106,18 @@ namespace xeus
         zmq::multipart_t wire_msg;
         wire_msg.recv(m_controller);
         std::string msg = wire_msg.peekstr(0u);
-        if (msg == "stop")
+        if (msg == STOP_CMD)
         {
             std::for_each(m_subshell_list.begin(), m_subshell_list.end(), [](const auto& subshell)
             {
-                zmq::multipart_t msg(std::string("stop"));
+                zmq::multipart_t msg(STOP_CMD.data(), STOP_CMD.size());
                 msg.push(get_controller_routing_key());
                 msg.send(subshell.socket);
             });
             wire_msg.send(socket);
             return true;
         }
-        else if (msg == "add_subshell")
+        else if (msg == ADD_SUBSHELL_CMD)
         {
             std::string subshell_id = wire_msg.peekstr(1u);
             bool res = add_subshell(subshell_id);
@@ -124,7 +125,7 @@ namespace xeus
             zmq::multipart_t rep(std::move(status));
             rep.send(m_controller);
         }
-        else if (msg == "remove_subshell")
+        else if (msg == REMOVE_SUBSHELL_CMD)
         {
             std::string subshell_id = wire_msg.peekstr(1u);
             bool res = remove_subshell(subshell_id);
@@ -136,6 +137,7 @@ namespace xeus
         {
             // Messages received on the controller should be forwarded to the
             // parent subshell.
+            wire_msg.pushstr(get_controller_routing_key());
             wire_msg.send(m_subshell_list.front().socket);
         }
         return false;
@@ -146,7 +148,7 @@ namespace xeus
         zmq::multipart_t wire_msg;
         wire_msg.recv(m_subshell_list[i].socket);
         std::string routing_key = wire_msg.popstr();
-        if (routing_key == get_shell_rounting_key())
+        if (routing_key == get_shell_routing_key())
         {
             wire_msg.send(m_shell);
         }

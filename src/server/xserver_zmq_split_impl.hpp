@@ -11,6 +11,7 @@
 #define XEUS_SERVER_ZMQ_SPLIT_IMPL_HPP
 
 #include <memory>
+#include <shared_mutex>
 
 #include "zmq.hpp"
 #include "zmq_addon.hpp"
@@ -25,11 +26,65 @@
 #include "xheartbeat.hpp"
 #include "xpublisher.hpp"
 #include "xshell.hpp"
+#include "xsubshell.hpp"
 
 namespace xeus
 {
-
     class xserver_zmq_split_impl
+    {
+    public:
+
+        using listener = std::function<void(xmessage)>;
+
+        xserver_zmq_split_impl(zmq::context_t& context,
+                               const xconfiguration& config,
+                               nl::json::error_handler_t eh);
+
+        void start_shell_thread();
+        void start_heartbeat_thread();
+        void start_publisher_thread();
+        void stop_channels();
+
+        xcontrol_messenger& get_control_messenge();
+
+        void send_shell(xmessage message);
+        void send_control(xmessage message);
+        std::optional<xmessage> send_stdin(xmessage message);
+        void publish(xpub_message message, channel c);
+
+        void update_config(xconfiguration& config) const;
+
+        std::optional<xmessage> deserialize(zmq::multipart_t& wire_msg) const;
+        zmq::multipart_t serialize_iopub(xpub_message&& msg);
+
+        nl::json add_subshell();
+        nl::json remove_subshell(std::string subshell_id);
+        nl::json list_subshell() const;
+
+    private:
+
+        zmq::context_t* p_context;
+
+        using authentication_ptr = std::unique_ptr<xauthentication>;
+        authentication_ptr p_auth;
+
+        xshell m_shell;
+        xcontrol m_control;
+        xheartbeat m_heartbeat;
+        xpublisher m_publisher;
+        std::map<std::string, xsubshell> m_subshell_map;
+        std::shared_mutex m_subshell_mutex;
+
+        xthread m_shell_thread;
+        xthread m_hb_thread;
+        xthread m_iopub_thread;
+
+        nl::json::error_handler_t m_error_handler;
+    };
+
+    // OLD API
+
+    /*class xserver_zmq_split_impl
     {
     public:
 
@@ -76,18 +131,14 @@ namespace xeus
         xheartbeat m_heartbeat;
         xpublisher m_publisher;
         xshell m_shell;
+        std::map<std::string, xsubshell> m_subshell_list;
 
         xthread m_shell_thread;
         xthread m_hb_thread;
         xthread m_iopub_thread;
 
         nl::json::error_handler_t m_error_handler;
-    };
-
-    std::string get_shell_routing_key();
-    std::string get_control_routing_key();
-    std::string get_stdin_routing_key();
-
+    };*/
 }
 
 #endif

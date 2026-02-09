@@ -28,7 +28,6 @@ namespace xeus
     {
     }
 
-    
     void xserver_control_main::start_impl(xpub_message message)
     {
         xserver_zmq_split::start_publisher_thread();

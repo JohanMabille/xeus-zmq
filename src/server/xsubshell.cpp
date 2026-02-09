@@ -59,7 +59,7 @@ namespace xeus
             if (wire_msg.recv(m_shell_poller, zmq::flags::dontwait))
             {
                 std::string chan = wire_msg.popstr();
-                if (chan == get_shell_rounting_key())
+                if (chan == get_shell_routing_key())
                 {
                     m_shell_queue.push(std::move(wire_msg));
                     return channel::SHELL;
@@ -89,7 +89,7 @@ namespace xeus
 
     void xsubshell::send_shell(zmq::multipart_t& message)
     {
-        message.pushstr(get_shell_rounting_key());
+        message.pushstr(get_shell_routing_key());
         message.send(m_shell_poller);
     }
 
@@ -118,7 +118,7 @@ namespace xeus
             {
                 m_control_queue.push(std::move(wire_msg));
             }
-            else if (chan == get_shell_rounting_key())
+            else if (chan == get_shell_routing_key())
             {
                 m_shell_queue.push(std::move(wire_msg));
             }
